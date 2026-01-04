@@ -38,24 +38,36 @@
     </style>
 </head>
 <body>
+    <!-- Header -->
     <header class="header" id="header">
-        <div class="container">
-            <nav class="nav">
-                <a href="../index.html" class="nav__logo"><span class="nav__logo-icon">❄️</span><span>Chill Air</span></a>
-                <div class="nav__menu" id="nav-menu">
-                    <ul class="nav__list">
-                        <li><a href="../index.html" class="nav__link">Home</a></li>
-                        <li><a href="../index.html#services" class="nav__link">Services</a></li>
-                        <li><a href="../index.html#about" class="nav__link">About</a></li>
-                        <li><a href="../index.html#reviews" class="nav__link">Reviews</a></li>
-                        <li><a href="../index.html#contact" class="nav__link">Contact</a></li>
-                    </ul>
-                    <a href="tel:+64272065345" class="nav__cta btn btn--primary">Call Now</a>
-                    <button class="nav__close" id="nav-close">×</button>
-                </div>
-                <button class="nav__toggle" id="nav-toggle"><span></span><span></span><span></span></button>
-            </nav>
-        </div>
+        <nav class="nav container">
+            <a href="../index.html" class="nav__logo">
+                <img src="../images/logo.png" alt="Chill Air Logo" class="nav__logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <span class="nav__logo-text" style="display:none;">❄️ <span>Chill Air</span></span>
+            </a>
+            
+            <div class="nav__menu" id="nav-menu">
+                <ul class="nav__list">
+                    <li class="nav__item"><a href="../index.html" class="nav__link">Home</a></li>
+                    <li class="nav__item"><a href="../index.html#services" class="nav__link">Services</a></li>
+                    <li class="nav__item"><a href="../index.html#about" class="nav__link">About</a></li>
+                    <li class="nav__item"><a href="../index.html#reviews" class="nav__link">Reviews</a></li>
+                    <li class="nav__item"><a href="../index.html#contact" class="nav__link">Contact</a></li>
+                    <li class="nav__item"><a href="../portal.html" class="nav__link nav__link--portal">Client Portal</a></li>
+                </ul>
+                <button class="nav__close" id="nav-close">✕</button>
+            </div>
+            
+            <div class="nav__actions">
+                <a href="tel:+64272065345" class="nav__phone">
+                    <span class="nav__phone-icon">📞</span>
+                    <span class="nav__phone-text">027 206 5345</span>
+                </a>
+                <button class="nav__toggle" id="nav-toggle">
+                    <span></span><span></span><span></span>
+                </button>
+            </div>
+        </nav>
     </header>
 
     <main>
@@ -157,14 +169,8 @@
                 </div>
                 <div class="footer__links"><h4>Quick Links</h4><ul><li><a href="../index.html">Home</a></li><li><a href="../index.html#services">Services</a></li><li><a href="../index.html#about">About Us</a></li><li><a href="../index.html#contact">Contact</a></li></ul></div>
                 <div class="footer__links"><h4>Services</h4><ul><li><a href="heat-pump-installation.html">Heat Pump Installation</a></li><li><a href="air-conditioning.html">Air Conditioning</a></li><li><a href="maintenance-repairs.html">Maintenance & Repairs</a></li><li><a href="ventilation.html">Ventilation Systems</a></li></ul></div>
-                <div class="footer__contact"><h4>Contact</h4><p>📞 <a href="tel:+64272065345">027 206 5345</a></p><p>✉️ <a href="mailto:greg@chillair.co.nz">greg@chillair.co.nz</a></p><p>📍 Christchurch, Canterbury NZ</p></div>
+                <div class="footer__contact"><h4>Contact</h4><p>📞 <a href="tel:+64272065345">027 206 5345</a></p><p>✉️ <a href="/cdn-cgi/l/email-protection#096e7b6c6e496a6160656568607b276a66276773"><span class="__cf_email__" data-cfemail="c4a3b6a1a384a7acada8a8a5adb6eaa7abeaaabe">[email&#160;protected]</span></a></p><p>📍 Christchurch, Canterbury NZ</p></div>
             </div>
             <div class="footer__bottom">
                 <p>&copy; 2024 Chill Air Limited. All rights reserved. <span class="footer__credit">Site crafted by <a href="https://tempero.nz" target="_blank" rel="noopener">Tempero Creative</a></span></p>
-                <div class="footer__legal"><a href="../terms.html">Terms & Conditions</a><a href="../privacy.html">Privacy Policy</a></div>
-            </div>
-        </div>
-    </footer>
-    <script src="../js/app.js"></script>
-</body>
-</html>
+                <div class="footer__legal"><a href="../terms.html">Terms & Conditions</a><a href="../privacy.h
