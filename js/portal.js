@@ -417,8 +417,6 @@ function updateMobileNavForClient() {
             navigateTo(link.dataset.page);
         });
     });
-        });
-    });
 }
 
 // ===== Client Dashboard =====
