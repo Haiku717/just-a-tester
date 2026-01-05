@@ -1,7 +1,6 @@
 // ===== Chill Air Main JavaScript =====
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize all components
     initNavigation();
     initScrollEffects();
     initReviewsSlider();
@@ -18,63 +17,75 @@ function initNavigation() {
     const navLinks = document.querySelectorAll('.nav__link');
     const header = document.getElementById('header');
 
-    // Mobile menu toggle
-    if (navToggle) {
-        navToggle.addEventListener('click', () => {
+    // Mobile menu toggle - using event delegation for reliability
+    if (navToggle && navMenu) {
+        navToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             navMenu.classList.add('active');
             document.body.style.overflow = 'hidden';
+            console.log('Menu opened'); // Debug
         });
     }
 
-    if (navClose) {
-        navClose.addEventListener('click', () => {
+    if (navClose && navMenu) {
+        navClose.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             navMenu.classList.remove('active');
             document.body.style.overflow = '';
+            console.log('Menu closed'); // Debug
         });
     }
 
     // Close menu on link click
-    navLinks.forEach(link => {
-        link.addEventListener('click', () => {
-            navMenu.classList.remove('active');
-            document.body.style.overflow = '';
+    navLinks.forEach(function(link) {
+        link.addEventListener('click', function() {
+            if (navMenu) {
+                navMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            }
         });
     });
 
     // Close menu on outside click
-    document.addEventListener('click', (e) => {
-        if (navMenu.classList.contains('active') && 
-            !navMenu.contains(e.target) && 
-            !navToggle.contains(e.target)) {
-            navMenu.classList.remove('active');
-            document.body.style.overflow = '';
+    document.addEventListener('click', function(e) {
+        if (navMenu && navMenu.classList.contains('active')) {
+            if (!navMenu.contains(e.target) && !navToggle.contains(e.target)) {
+                navMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            }
         }
     });
 
     // Header scroll effect
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 100) {
-            header.classList.add('scrolled');
-        } else {
-            header.classList.remove('scrolled');
-        }
-    });
+    if (header) {
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 100) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+    }
 
     // Active link on scroll
     const sections = document.querySelectorAll('section[id]');
     
-    window.addEventListener('scroll', () => {
+    window.addEventListener('scroll', function() {
         const scrollY = window.scrollY;
         
-        sections.forEach(section => {
+        sections.forEach(function(section) {
             const sectionHeight = section.offsetHeight;
             const sectionTop = section.offsetTop - 150;
             const sectionId = section.getAttribute('id');
-            const navLink = document.querySelector(`.nav__link[href="#${sectionId}"]`);
+            const navLink = document.querySelector('.nav__link[href="#' + sectionId + '"]');
             
             if (navLink) {
                 if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
-                    navLinks.forEach(link => link.classList.remove('active'));
+                    navLinks.forEach(function(link) {
+                        link.classList.remove('active');
+                    });
                     navLink.classList.add('active');
                 }
             }
@@ -84,15 +95,14 @@ function initNavigation() {
 
 // ===== Scroll Effects =====
 function initScrollEffects() {
-    // Intersection Observer for fade-in animations
     const observerOptions = {
         root: null,
         rootMargin: '0px',
         threshold: 0.1
     };
 
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
+    const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
             if (entry.isIntersecting) {
                 entry.target.classList.add('animate-in');
                 entry.target.style.opacity = '1';
@@ -102,8 +112,7 @@ function initScrollEffects() {
         });
     }, observerOptions);
 
-    // Observe elements with animation classes (excluding review cards which are handled by slider)
-    document.querySelectorAll('.service-card, .about__content, .about__image').forEach(el => {
+    document.querySelectorAll('.service-card, .about__content, .about__image').forEach(function(el) {
         el.style.opacity = '0';
         el.style.transform = 'translateY(30px)';
         el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
@@ -111,7 +120,7 @@ function initScrollEffects() {
     });
 }
 
-// ===== Reviews Slider =====
+// ===== Reviews Slider - Completely Rebuilt =====
 function initReviewsSlider() {
     const slider = document.getElementById('reviews-slider');
     if (!slider) return;
@@ -122,119 +131,158 @@ function initReviewsSlider() {
     const nextBtn = document.getElementById('reviews-next');
     const dotsContainer = document.getElementById('reviews-dots');
 
-    if (!cards.length) return;
+    if (!track || cards.length === 0) return;
 
-    let currentIndex = 0;
-    let cardsPerView = getCardsPerView();
-    let totalSlides = Math.ceil(cards.length / cardsPerView);
-
-    // Create dots
-    function createDots() {
-        if (!dotsContainer) return;
-        dotsContainer.innerHTML = '';
-        
-        for (let i = 0; i < totalSlides; i++) {
-            const dot = document.createElement('div');
-            dot.classList.add('reviews__dot');
-            if (i === 0) dot.classList.add('active');
-            dot.addEventListener('click', () => goToSlide(i));
-            dotsContainer.appendChild(dot);
-        }
-    }
-
-    // Get cards per view based on screen width
+    let currentSlide = 0;
+    let autoPlayInterval;
+    
+    // Calculate slides based on viewport
     function getCardsPerView() {
         if (window.innerWidth <= 768) return 1;
         if (window.innerWidth <= 1024) return 2;
         return 3;
     }
+    
+    function getTotalSlides() {
+        const cardsPerView = getCardsPerView();
+        return Math.ceil(cards.length / cardsPerView);
+    }
+
+    // Create navigation dots
+    function createDots() {
+        if (!dotsContainer) return;
+        dotsContainer.innerHTML = '';
+        const totalSlides = getTotalSlides();
+        
+        for (let i = 0; i < totalSlides; i++) {
+            const dot = document.createElement('div');
+            dot.classList.add('reviews__dot');
+            if (i === 0) dot.classList.add('active');
+            dot.addEventListener('click', function() {
+                goToSlide(i);
+            });
+            dotsContainer.appendChild(dot);
+        }
+    }
 
     // Update slider position
     function updateSlider() {
-        const gap = 24; // var(--space-xl) approximately
-        const card = cards[0];
-        const cardWidth = card.offsetWidth + gap;
-        const offset = currentIndex * cardsPerView * cardWidth;
+        const cardsPerView = getCardsPerView();
+        const gap = 24; // matches CSS gap
+        const cardWidth = cards[0].offsetWidth;
+        const moveAmount = (cardWidth + gap) * cardsPerView;
+        const offset = currentSlide * moveAmount;
         
-        track.style.transform = `translateX(-${offset}px)`;
+        track.style.transform = 'translateX(-' + offset + 'px)';
         
         // Update dots
-        document.querySelectorAll('.reviews__dot').forEach((dot, i) => {
-            dot.classList.toggle('active', i === currentIndex);
+        const dots = dotsContainer ? dotsContainer.querySelectorAll('.reviews__dot') : [];
+        dots.forEach(function(dot, i) {
+            if (i === currentSlide) {
+                dot.classList.add('active');
+            } else {
+                dot.classList.remove('active');
+            }
         });
     }
 
     // Go to specific slide
     function goToSlide(index) {
-        currentIndex = Math.max(0, Math.min(index, totalSlides - 1));
+        const totalSlides = getTotalSlides();
+        currentSlide = Math.max(0, Math.min(index, totalSlides - 1));
         updateSlider();
     }
 
     // Next slide
     function nextSlide() {
-        currentIndex = (currentIndex + 1) >= totalSlides ? 0 : currentIndex + 1;
+        const totalSlides = getTotalSlides();
+        currentSlide = (currentSlide + 1) % totalSlides;
         updateSlider();
     }
 
     // Previous slide
     function prevSlide() {
-        currentIndex = (currentIndex - 1) < 0 ? totalSlides - 1 : currentIndex - 1;
+        const totalSlides = getTotalSlides();
+        currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
         updateSlider();
     }
 
+    // Auto-play
+    function startAutoPlay() {
+        stopAutoPlay();
+        autoPlayInterval = setInterval(nextSlide, 5000);
+    }
+
+    function stopAutoPlay() {
+        if (autoPlayInterval) {
+            clearInterval(autoPlayInterval);
+        }
+    }
+
     // Event listeners
-    if (prevBtn) prevBtn.addEventListener('click', prevSlide);
-    if (nextBtn) nextBtn.addEventListener('click', nextSlide);
+    if (prevBtn) {
+        prevBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            prevSlide();
+            stopAutoPlay();
+            startAutoPlay();
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            nextSlide();
+            stopAutoPlay();
+            startAutoPlay();
+        });
+    }
 
     // Touch/Swipe support
     let touchStartX = 0;
     let touchEndX = 0;
 
-    track.addEventListener('touchstart', (e) => {
+    track.addEventListener('touchstart', function(e) {
         touchStartX = e.changedTouches[0].screenX;
-    });
+        stopAutoPlay();
+    }, { passive: true });
 
-    track.addEventListener('touchend', (e) => {
+    track.addEventListener('touchend', function(e) {
         touchEndX = e.changedTouches[0].screenX;
         handleSwipe();
-    });
+        startAutoPlay();
+    }, { passive: true });
 
     function handleSwipe() {
         const swipeThreshold = 50;
         const diff = touchStartX - touchEndX;
-
-        if (Math.abs(diff) > swipeThreshold) {
-            if (diff > 0) {
-                nextSlide();
-            } else {
-                prevSlide();
-            }
+        
+        if (diff > swipeThreshold) {
+            nextSlide();
+        } else if (diff < -swipeThreshold) {
+            prevSlide();
         }
     }
 
-    // Auto-play
-    let autoplayInterval = setInterval(nextSlide, 5000);
-
-    slider.addEventListener('mouseenter', () => clearInterval(autoplayInterval));
-    slider.addEventListener('mouseleave', () => {
-        autoplayInterval = setInterval(nextSlide, 5000);
-    });
+    // Pause on hover
+    slider.addEventListener('mouseenter', stopAutoPlay);
+    slider.addEventListener('mouseleave', startAutoPlay);
 
     // Handle resize
-    window.addEventListener('resize', () => {
-        const newCardsPerView = getCardsPerView();
-        if (newCardsPerView !== cardsPerView) {
-            cardsPerView = newCardsPerView;
-            totalSlides = Math.ceil(cards.length / cardsPerView);
-            currentIndex = Math.min(currentIndex, totalSlides - 1);
+    let resizeTimeout;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(function() {
             createDots();
+            currentSlide = 0;
             updateSlider();
-        }
+        }, 250);
     });
 
     // Initialize
     createDots();
     updateSlider();
+    startAutoPlay();
 }
 
 // ===== Contact Form =====
@@ -242,210 +290,148 @@ function initContactForm() {
     const form = document.getElementById('contact-form');
     if (!form) return;
 
-    form.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', function(e) {
         e.preventDefault();
-
-        const submitBtn = form.querySelector('button[type="submit"]');
-        const originalText = submitBtn.textContent;
         
-        // Show loading state
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Sending...';
-
-        // Gather form data
         const formData = new FormData(form);
-        const data = Object.fromEntries(formData);
-
-        // Simulate form submission (replace with actual API call)
-        try {
-            // In production, this would be an API call
-            await simulateFormSubmission(data);
-            
-            // Show success message
-            showNotification('Thank you! Your message has been sent. We\'ll get back to you within 24 hours.', 'success');
-            form.reset();
-        } catch (error) {
-            showNotification('Something went wrong. Please try again or call us directly.', 'error');
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.textContent = originalText;
+        const data = Object.fromEntries(formData.entries());
+        
+        // Simple validation
+        if (!data.name || !data.email || !data.message) {
+            showNotification('Please fill in all required fields.', 'error');
+            return;
         }
+
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(data.email)) {
+            showNotification('Please enter a valid email address.', 'error');
+            return;
+        }
+
+        // Show success message
+        showNotification('Thanks for your message! We\'ll be in touch soon.', 'success');
+        form.reset();
     });
 }
 
-// Simulate form submission
-function simulateFormSubmission(data) {
-    return new Promise((resolve) => {
-        console.log('Form data submitted:', data);
-        setTimeout(resolve, 1500);
-    });
-}
-
-// Show notification
-function showNotification(message, type = 'success') {
-    // Remove existing notification
+// Notification helper
+function showNotification(message, type) {
+    // Remove existing notifications
     const existing = document.querySelector('.notification');
     if (existing) existing.remove();
 
     const notification = document.createElement('div');
-    notification.className = `notification notification--${type}`;
-    notification.innerHTML = `
-        <span>${message}</span>
-        <button class="notification__close" onclick="this.parentElement.remove()">✕</button>
-    `;
-
-    // Add styles
-    notification.style.cssText = `
-        position: fixed;
-        top: 100px;
-        right: 20px;
-        padding: 16px 24px;
-        background: ${type === 'success' ? '#10B981' : '#EF4444'};
-        color: white;
-        border-radius: 8px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        z-index: 10000;
-        animation: slideIn 0.3s ease;
-        max-width: 400px;
-    `;
-
-    // Add animation keyframes
-    if (!document.querySelector('#notification-styles')) {
-        const style = document.createElement('style');
-        style.id = 'notification-styles';
-        style.textContent = `
-            @keyframes slideIn {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-            .notification__close {
-                background: none;
-                border: none;
-                color: white;
-                font-size: 18px;
-                cursor: pointer;
-                padding: 0;
-                line-height: 1;
-            }
-        `;
-        document.head.appendChild(style);
-    }
-
+    notification.className = 'notification notification--' + type;
+    notification.innerHTML = '<span>' + message + '</span><button onclick="this.parentElement.remove()">×</button>';
+    
     document.body.appendChild(notification);
-
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
+    
+    // Auto remove after 5 seconds
+    setTimeout(function() {
         if (notification.parentElement) {
-            notification.style.animation = 'slideIn 0.3s ease reverse';
-            setTimeout(() => notification.remove(), 300);
+            notification.remove();
         }
     }, 5000);
 }
 
 // ===== Smooth Scroll =====
 function initSmoothScroll() {
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
         anchor.addEventListener('click', function(e) {
-            e.preventDefault();
-            const targetId = this.getAttribute('href');
+            const href = this.getAttribute('href');
+            if (href === '#') return;
             
-            if (targetId === '#') return;
-            
-            const target = document.querySelector(targetId);
+            const target = document.querySelector(href);
             if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
+                e.preventDefault();
+                const headerOffset = 80;
+                const elementPosition = target.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
                 });
             }
         });
     });
 }
 
-// ===== Utility Functions =====
-
-// Debounce function for performance
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-// Format phone number
-function formatPhoneNumber(phone) {
-    const cleaned = phone.replace(/\D/g, '');
-    if (cleaned.length === 10) {
-        return cleaned.replace(/(\d{3})(\d{3})(\d{4})/, '$1 $2 $3');
-    }
-    return phone;
-}
-
-// Validate email
-function isValidEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
 // ===== Gallery Lightbox =====
 function initGalleryLightbox() {
-    const galleryItems = document.querySelectorAll('.gallery__item[data-lightbox]');
-    if (!galleryItems.length) return;
-
-    // Create lightbox element
-    const lightbox = document.createElement('div');
-    lightbox.className = 'lightbox';
-    lightbox.innerHTML = `
-        <button class="lightbox__close">×</button>
-        <div class="lightbox__content">
-            <img src="" alt="Gallery image">
-        </div>
-    `;
-    document.body.appendChild(lightbox);
-
-    const lightboxImg = lightbox.querySelector('img');
-    const closeBtn = lightbox.querySelector('.lightbox__close');
+    const lightbox = document.getElementById('gallery-lightbox');
+    if (!lightbox) return;
+    
+    const lightboxImg = lightbox.querySelector('.gallery__lightbox-img');
+    const closeBtn = lightbox.querySelector('.gallery__lightbox-close');
+    const galleryItems = document.querySelectorAll('.gallery__item[data-src]');
 
     // Open lightbox
-    galleryItems.forEach(item => {
-        item.addEventListener('click', (e) => {
-            e.preventDefault();
-            const imgSrc = item.href || item.querySelector('img').src;
-            lightboxImg.src = imgSrc;
-            lightbox.classList.add('active');
-            document.body.style.overflow = 'hidden';
+    galleryItems.forEach(function(item) {
+        item.addEventListener('click', function() {
+            const src = this.getAttribute('data-src');
+            if (src && lightboxImg) {
+                lightboxImg.src = src;
+                lightbox.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
         });
     });
 
     // Close lightbox
-    closeBtn.addEventListener('click', closeLightbox);
-    lightbox.addEventListener('click', (e) => {
-        if (e.target === lightbox) closeLightbox();
-    });
-    
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && lightbox.classList.contains('active')) {
-            closeLightbox();
-        }
-    });
-
     function closeLightbox() {
         lightbox.classList.remove('active');
         document.body.style.overflow = '';
     }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeLightbox);
+    }
+
+    // Close on backdrop click
+    lightbox.addEventListener('click', function(e) {
+        if (e.target === lightbox) {
+            closeLightbox();
+        }
+    });
+
+    // Close on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+            closeLightbox();
+        }
+    });
 }
 
-// Export functions for use in other scripts
-window.ChillAir = {
-    showNotification,
-    formatPhoneNumber,
-    isValidEmail,
-    debounce
-};
+// ===== Portal Functions (if on portal page) =====
+if (document.querySelector('.portal-body')) {
+    initPortal();
+}
+
+function initPortal() {
+    // Tab switching for admin login
+    const tabs = document.querySelectorAll('.login-tab');
+    const forms = document.querySelectorAll('.login-form-container');
+    
+    tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            const target = this.dataset.tab;
+            
+            // Update tabs
+            tabs.forEach(function(t) {
+                t.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            // Update forms
+            forms.forEach(function(form) {
+                if (form.id === target + '-form') {
+                    form.classList.add('active');
+                } else {
+                    form.classList.remove('active');
+                }
+            });
+        });
+    });
+}

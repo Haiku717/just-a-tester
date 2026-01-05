@@ -120,12 +120,26 @@ function initLogin() {
     const loginForm = document.getElementById('login-form');
     const loginType = document.getElementById('login-type');
 
+    if (!loginTabs.length || !loginForm || !loginType) {
+        console.error('Login elements not found');
+        return;
+    }
+
     // Tab switching
     loginTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Update visual state
             loginTabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            loginType.value = tab.dataset.tab;
+            this.classList.add('active');
+            
+            // Update hidden form value
+            const tabType = this.getAttribute('data-tab');
+            loginType.value = tabType;
+            
+            console.log('Tab clicked:', tabType); // Debug
         });
     });
 
