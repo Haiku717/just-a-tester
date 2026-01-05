@@ -393,7 +393,7 @@ button {
     }
     
     .nav__close {
-        display: block;
+        display: none !important;
     }
     
     .nav__phone-text {
@@ -880,19 +880,30 @@ button {
 
 .reviews__rating {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--space-md);
+    gap: var(--space-sm);
     margin-top: var(--space-md);
 }
 
 .reviews__stars {
     color: #FFD700;
-    font-size: 1.5rem;
+    font-size: 1.75rem;
+    letter-spacing: 2px;
 }
 
-.reviews__score {
-    color: rgba(255, 255, 255, 0.8);
+.reviews__google-rating {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+}
+
+.reviews__google-logo {
+    height: 20px;
+    width: auto;
 }
 
 .reviews__slider {

@@ -651,7 +651,7 @@ function loadCalendar() {
         if (isToday) dayClass += ' calendar-day--today';
         
         let eventsHtml = dayEvents.map(function(e) {
-            return '<div class="calendar-event" onclick="viewEvent(' + e.id + ')">' + e.title + '</div>';
+            return '<div class="calendar-event" onclick="event.stopPropagation(); viewEvent(' + e.id + ')">' + e.title + '</div>';
         }).join('');
         
         html += '<div class="' + dayClass + '" onclick="selectDate(\'' + dateStr + '\')"><div class="calendar-day__number">' + day + '</div>' + eventsHtml + '</div>';
@@ -734,8 +734,22 @@ function viewJobDetails(jobId) {
 
 function toggleChecklistItem(index) {
     if (!isAdmin || !currentEditingJob) return;
-    // Toggle logic here - for demo, just show notification
-    showNotification('Checklist item toggled', 'info');
+    
+    // Calculate completion based on index
+    const totalItems = currentEditingJob.checklist.length;
+    const completedItems = index + 1;
+    const newProgress = Math.round((completedItems / totalItems) * 100);
+    
+    // Toggle - if clicking on an already completed item, reduce progress
+    if (currentEditingJob.progress >= newProgress) {
+        currentEditingJob.progress = Math.round((index / totalItems) * 100);
+    } else {
+        currentEditingJob.progress = newProgress;
+    }
+    
+    // Re-render the job details
+    viewJobDetails(currentEditingJob.id);
+    showNotification('Progress updated to ' + currentEditingJob.progress + '%', 'success');
 }
 
 function saveJobChanges() {
@@ -783,6 +797,53 @@ function acceptQuote(quoteId) {
         loadPageData(currentPage);
         showNotification('Quote accepted! We\'ll be in touch soon.', 'success');
     }
+}
+
+function viewEvent(eventId) {
+    const event = demoData.events.find(function(e) { return e.id === eventId; });
+    if (!event) return;
+    
+    const client = event.clientId ? demoData.clients.find(function(c) { return c.id === event.clientId; }) : null;
+    
+    const content = document.getElementById('view-job-content');
+    content.innerHTML = '<div class="detail-header"><div><div class="detail-header__id">Event #' + event.id + '</div><div class="detail-header__title">' + event.title + '</div></div><span class="badge badge--' + (event.type === 'job' ? 'progress' : 'pending') + '">' + capitalizeFirst(event.type) + '</span></div>' +
+        '<div class="detail-grid">' +
+        '<div class="detail-item"><div class="detail-item__label">Date</div><div class="detail-item__value">' + formatDate(event.date) + '</div></div>' +
+        '<div class="detail-item"><div class="detail-item__label">Time</div><div class="detail-item__value">' + (event.time || 'All day') + '</div></div>' +
+        '<div class="detail-item"><div class="detail-item__label">Type</div><div class="detail-item__value">' + capitalizeFirst(event.type) + '</div></div>' +
+        '<div class="detail-item"><div class="detail-item__label">Client</div><div class="detail-item__value">' + (client ? client.name : 'No client') + '</div></div>' +
+        '</div>';
+    
+    document.getElementById('save-job-btn').style.display = 'none';
+    document.querySelector('#view-job-modal .modal-title').textContent = 'Event Details';
+    openModal('view-job-modal');
+}
+
+function viewInvoiceDetails(invoiceId) {
+    const invoice = demoData.invoices.find(function(i) { return i.id === invoiceId; });
+    if (!invoice) return;
+    
+    const content = document.getElementById('view-quote-content');
+    const statusClass = invoice.status === 'overdue' ? 'overdue' : invoice.status;
+    
+    content.innerHTML = '<div class="detail-header"><div><div class="detail-header__id">' + invoice.id + '</div><div class="detail-header__title">Invoice Details</div></div><span class="badge badge--' + statusClass + '">' + capitalizeFirst(invoice.status) + '</span></div>' +
+        '<div class="detail-grid">' +
+        '<div class="detail-item"><div class="detail-item__label">Client</div><div class="detail-item__value">' + invoice.client + '</div></div>' +
+        '<div class="detail-item"><div class="detail-item__label">Amount</div><div class="detail-item__value" style="font-size: 1.25rem; color: var(--color-primary);">$' + invoice.amount.toLocaleString() + '</div></div>' +
+        '<div class="detail-item"><div class="detail-item__label">Due Date</div><div class="detail-item__value">' + formatDate(invoice.due) + '</div></div>' +
+        '<div class="detail-item"><div class="detail-item__label">Status</div><div class="detail-item__value">' + capitalizeFirst(invoice.status) + (invoice.paid ? ' on ' + formatDate(invoice.paid) : '') + '</div></div>' +
+        '</div>' +
+        '<div style="margin-top: 24px;"><h4 style="margin-bottom: 16px; color: var(--color-text);">Description</h4><p style="color: var(--color-text-muted);">' + invoice.description + '</p></div>';
+    
+    const footer = document.getElementById('view-quote-footer');
+    if (invoice.status !== 'paid') {
+        footer.innerHTML = '<button class="btn btn-secondary" onclick="closeModal(\'view-quote-modal\')">Close</button><button class="btn btn-success" onclick="closeModal(\'view-quote-modal\'); openPayModal(\'' + invoice.id + '\')">Pay Invoice</button>';
+    } else {
+        footer.innerHTML = '<button class="btn btn-secondary" onclick="closeModal(\'view-quote-modal\')">Close</button>';
+    }
+    
+    document.querySelector('#view-quote-modal .modal-title').textContent = 'Invoice Details';
+    openModal('view-quote-modal');
 }
 
 function viewClientDetails(clientId) {

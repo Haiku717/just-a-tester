@@ -8,24 +8,25 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Chill Air Portal">
     
-    <title>Chill Air Portal | Client & Admin Dashboard</title>
+    <title>Client Portal | Chill Air Canterbury</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>❄️</text></svg>">
+    <link rel="icon" href="images/favicon.ico" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* ===== CSS Variables - Dark Ocean Theme ===== */
+        /* ===== CSS Variables - Dark Ocean Theme (Lightened) ===== */
         :root {
-            --color-bg-dark: #0a1628;
-            --color-bg-card: #0f2037;
-            --color-bg-elevated: #142a45;
-            --color-bg-hover: #1a3554;
-            --color-bg-input: #0d1a2d;
+            --color-bg-dark: #0f1d32;
+            --color-bg-card: #152742;
+            --color-bg-elevated: #1a3250;
+            --color-bg-hover: #213d5e;
+            --color-bg-input: #0f1d32;
             
             --color-primary: #00d4ff;
             --color-primary-glow: rgba(0, 212, 255, 0.3);
@@ -39,17 +40,17 @@
             --color-info: #40c4ff;
             
             --color-text: #e8f4f8;
-            --color-text-muted: #8ba3b8;
-            --color-text-dim: #5a7a94;
+            --color-text-muted: #9cb5c9;
+            --color-text-dim: #6a8da6;
             
-            --color-border: #1e3a5f;
-            --color-border-light: #2a4a6a;
+            --color-border: #264166;
+            --color-border-light: #2f4f73;
             
             --gradient-primary: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
             --gradient-accent: linear-gradient(135deg, #00ffcc 0%, #00d4ff 100%);
-            --gradient-dark: linear-gradient(180deg, #0a1628 0%, #0f2037 100%);
-            --gradient-card: linear-gradient(145deg, #0f2037 0%, #142a45 100%);
-            --gradient-glow: radial-gradient(ellipse at center, rgba(0, 212, 255, 0.15) 0%, transparent 70%);
+            --gradient-dark: linear-gradient(180deg, #0f1d32 0%, #152742 100%);
+            --gradient-card: linear-gradient(145deg, #152742 0%, #1a3250 100%);
+            --gradient-glow: radial-gradient(ellipse at center, rgba(0, 212, 255, 0.12) 0%, transparent 70%);
             
             --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             
@@ -59,10 +60,10 @@
             --radius-xl: 20px;
             --radius-full: 50px;
             
-            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
-            --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.5);
-            --shadow-glow: 0 0 30px rgba(0, 212, 255, 0.2);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
+            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.35);
+            --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.45);
+            --shadow-glow: 0 0 30px rgba(0, 212, 255, 0.15);
             
             --sidebar-width: 260px;
             --header-height: 70px;
@@ -359,16 +360,7 @@
         }
 
         .sidebar-logo img {
-            height: 36px;
-        }
-
-        .sidebar-logo h2 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            background: var(--gradient-primary);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            height: 44px;
         }
 
         .sidebar-nav {
@@ -1205,32 +1197,129 @@
             }
 
             .main-body {
-                padding: 20px;
-                padding-top: 80px;
-                padding-bottom: 100px;
+                padding: 16px;
+                padding-top: 72px;
+                padding-bottom: 90px;
             }
 
             .main-header {
                 display: none;
+            }
+            
+            .grid-2 {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            
+            .quick-actions {
+                gap: 8px;
+            }
+            
+            .quick-action {
+                padding: 10px 14px;
+                font-size: 13px;
+            }
+            
+            .card-header {
+                padding: 16px;
+            }
+            
+            .card-body {
+                padding: 16px;
+            }
+            
+            table th, table td {
+                padding: 12px;
+                font-size: 13px;
+            }
+            
+            .modal {
+                margin: 10px;
+                max-height: calc(100vh - 20px);
+            }
+            
+            .modal-body {
+                padding: 16px;
             }
         }
 
         @media (max-width: 600px) {
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
-                gap: 12px;
+                gap: 10px;
             }
 
             .stat-card {
-                padding: 16px;
+                padding: 14px;
             }
 
             .stat-card__value {
-                font-size: 1.5rem;
+                font-size: 1.25rem;
+            }
+            
+            .stat-card__label {
+                font-size: 11px;
+            }
+            
+            .stat-card__icon {
+                width: 36px;
+                height: 36px;
+                font-size: 1.1rem;
             }
 
             .login-card {
-                padding: 32px 24px;
+                padding: 28px 20px;
+            }
+            
+            .quick-action {
+                flex: 1 1 calc(50% - 4px);
+                justify-content: center;
+                padding: 12px 10px;
+            }
+            
+            .job-card {
+                padding: 16px;
+            }
+            
+            .invoice-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            
+            .invoice-card__amount {
+                text-align: left;
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters {
+                gap: 8px;
+            }
+            
+            .filter-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            
+            .mobile-header {
+                padding: 12px 16px;
+            }
+            
+            .mobile-header__logo img {
+                height: 28px;
             }
         }
 
@@ -1431,7 +1520,7 @@
         <div class="login-card">
             <div class="login-logo">
                 <img src="images/logowhite.png" alt="Chill Air" onerror="this.style.display='none'">
-                <h1>Chill Air Portal</h1>
+                <h1>Client Portal</h1>
             </div>
             
             <div class="login-tabs">
@@ -1463,7 +1552,7 @@
                 </div>
                 <div class="login-demo-item">
                     <span>Client:</span>
-                    <span><code>john@example.com</code> / <code>demo123</code></span>
+                    <span><code><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="c5afaaadab85a0bda4a8b5a9a0eba6aaa8">[email&#160;protected]</a></code> / <code>demo123</code></span>
                 </div>
             </div>
             
@@ -1482,7 +1571,6 @@
         <div class="mobile-header">
             <div class="mobile-header__logo">
                 <img src="images/logowhite.png" alt="Chill Air" onerror="this.style.display='none'">
-                <span class="mobile-header__title">Chill Air</span>
             </div>
             <button type="button" class="mobile-menu-btn" id="mobile-menu-btn">☰</button>
         </div>
@@ -1492,7 +1580,6 @@
             <div class="sidebar-header">
                 <a href="index.html" class="sidebar-logo">
                     <img src="images/logowhite.png" alt="Chill Air" onerror="this.style.display='none'">
-                    <h2>Chill Air</h2>
                 </a>
             </div>
             
@@ -1539,6 +1626,14 @@
                 </div>
                 
                 <!-- Admin Navigation -->
+                <div class="nav-section admin-nav hidden">
+                    <div class="nav-section-title">Dashboard</div>
+                    <a href="#" class="nav-link active" data-page="dashboard">
+                        <span class="nav-icon">🏠</span>
+                        <span>Overview</span>
+                    </a>
+                </div>
+                
                 <div class="nav-section admin-nav hidden">
                     <div class="nav-section-title">Management</div>
                     <a href="#" class="nav-link" data-page="admin-jobs">
@@ -2284,11 +2379,4 @@
             <div class="modal-body" id="pay-invoice-content"></div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('pay-invoice-modal')">Cancel</button>
-                <button class="btn btn-success" onclick="processPayment()">Pay Now</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="js/portal.js"></script>
-</body>
-</html>
+                <button class="btn btn-success" onclick="processPayment()">P
