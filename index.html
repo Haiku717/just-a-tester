@@ -1,14 +1,102 @@
-<div class="fixed bottom-0 w-full bg-white border-t flex justify-around p-3 shadow-2xl">
-    <button onclick="setView('dashboard')" class="flex flex-col items-center text-blue-800">
-        <i data-lucide="layout-dashboard"></i>
-        <span class="text-[10px] font-bold">Dashboard</span>
-    </button>
-    <button onclick="setView('quotes')" class="flex flex-col items-center text-gray-500">
-        <i data-lucide="file-text"></i>
-        <span class="text-[10px] font-bold">Quotes</span>
-    </button>
-    <button onclick="alert('Xero Integration Coming Soon!')" class="flex flex-col items-center text-gray-500">
-        <i data-lucide="share-2"></i>
-        <span class="text-[10px] font-bold">Xero</span>
-    </button>
-</div>
+lucide.createIcons();
+
+let state = {
+    jobs: JSON.parse(localStorage.getItem('hvac_data')) || [],
+    reviewLink: "https://g.page/r/your-link-here/review"
+};
+
+function save() {
+    localStorage.setItem('hvac_data', JSON.stringify(state.jobs));
+}
+
+function toggleForm() {
+    const el = document.getElementById('form-overlay');
+    el.classList.toggle('hidden');
+}
+
+function submitForm() {
+    const client = document.getElementById('f-client').value;
+    const task = document.getElementById('f-task').value;
+    const amount = parseFloat(document.getElementById('f-amount').value || 0);
+    const type = document.getElementById('f-type').value;
+
+    if (!client || !task) return alert("Please fill in Name and Task");
+
+    const entry = {
+        id: Date.now(),
+        client,
+        task,
+        amount,
+        type,
+        status: type === 'Quote' ? 'Pending' : 'Active',
+        date: new Date().toLocaleDateString('en-NZ')
+    };
+
+    state.jobs.push(entry);
+    save();
+    toggleForm();
+    // Clear inputs
+    document.getElementById('f-client').value = '';
+    document.getElementById('f-task').value = '';
+    
+    type === 'Quote' ? renderQuotes() : renderDashboard();
+}
+
+function completeJob(id) {
+    const job = state.jobs.find(j => j.id === id);
+    job.status = 'Paid';
+    save();
+    
+    const msg = `Hi ${job.client}, thanks for choosing us today! We'd love a review: ${state.reviewLink}`;
+    navigator.clipboard.writeText(msg);
+    
+    renderDashboard();
+}
+
+function renderDashboard() {
+    const activeJobs = state.jobs.filter(j => j.type === 'Job' && j.status === 'Active');
+    const container = document.getElementById('app-content');
+    
+    container.innerHTML = `
+        <h2 class="text-sm font-black text-gray-400 uppercase tracking-widest mb-4">Active Jobs</h2>
+        <div class="space-y-3">
+            ${activeJobs.map(job => `
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-bold text-gray-900">${job.client}</h3>
+                            <p class="text-sm text-gray-500">${job.task}</p>
+                            <p class="text-blue-600 font-bold mt-2">$${(job.amount * 1.15).toFixed(2)} <span class="text-[10px] text-gray-400">INC GST</span></p>
+                        </div>
+                        <button onclick="completeJob(${job.id})" class="bg-blue-600 text-white p-3 rounded-xl">
+                            <i data-lucide="check"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    lucide.createIcons();
+}
+
+function renderQuotes() {
+    const quotes = state.jobs.filter(j => j.type === 'Quote');
+    const container = document.getElementById('app-content');
+    
+    container.innerHTML = `
+        <h2 class="text-sm font-black text-gray-400 uppercase tracking-widest mb-4">Quotes & Estimates</h2>
+        <div class="space-y-3">
+            ${quotes.map(q => `
+                <div class="bg-white p-5 rounded-2xl border border-dashed border-gray-300">
+                    <h3 class="font-bold text-gray-800">${q.client}</h3>
+                    <p class="text-sm text-gray-500">${q.task}</p>
+                    <p class="text-gray-900 font-bold mt-1">$${(q.amount * 1.15).toFixed(2)}</p>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    lucide.createIcons();
+}
+
+// Start app
+renderDashboard();
