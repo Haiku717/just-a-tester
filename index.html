@@ -1,35 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TradeFlow | Job Manager</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-</head>
-<body class="bg-gray-50 pb-24">
-    <nav class="bg-blue-800 text-white p-4 sticky top-0 shadow-md z-50">
-        <div class="max-w-2xl mx-auto flex justify-between items-center">
-            <h1 class="font-bold text-xl flex items-center gap-2">
-                <i data-lucide="wrench"></i> TradeFlow
-            </h1>
-            <button onclick="addNewJob()" class="bg-white text-blue-800 p-2 rounded-full">
-                <i data-lucide="plus"></i>
-            </button>
-        </div>
-    </nav>
-
-    <main class="max-w-2xl mx-auto p-4 space-y-4" id="job-list">
-        </main>
-
-    <footer class="fixed bottom-0 w-full bg-white border-t p-4">
-        <div class="max-w-2xl mx-auto flex flex-col gap-2">
-            <label class="text-xs font-bold text-gray-500 uppercase">Google Review Link</label>
-            <input type="text" id="google-link" onchange="saveSettings()" placeholder="Paste your Google review URL here" 
-                   class="w-full p-2 border rounded text-sm bg-gray-50">
-        </div>
-    </footer>
-
-    <script src="js/app.js"></script>
-</body>
-</html>
+<div class="fixed bottom-0 w-full bg-white border-t flex justify-around p-3 shadow-2xl">
+    <button onclick="setView('dashboard')" class="flex flex-col items-center text-blue-800">
+        <i data-lucide="layout-dashboard"></i>
+        <span class="text-[10px] font-bold">Dashboard</span>
+    </button>
+    <button onclick="setView('quotes')" class="flex flex-col items-center text-gray-500">
+        <i data-lucide="file-text"></i>
+        <span class="text-[10px] font-bold">Quotes</span>
+    </button>
+    <button onclick="alert('Xero Integration Coming Soon!')" class="flex flex-col items-center text-gray-500">
+        <i data-lucide="share-2"></i>
+        <span class="text-[10px] font-bold">Xero</span>
+    </button>
+</div>
