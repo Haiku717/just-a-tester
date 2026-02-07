@@ -1,23 +1,23 @@
-// Initialize state properly
+// Initialize Icons
+lucide.createIcons();
+
+// 1. Data State (Persistent)
 let state = {
     jobs: JSON.parse(localStorage.getItem('hvac_data')) || [],
-    reviewLink: localStorage.getItem('hvac_review_link') || "https://g.page/r/your-link/review",
-    currentView: 'dashboard'
+    reviewLink: localStorage.getItem('hvac_review_link') || "https://g.page/r/your-link-here/review"
 };
 
-// Utility to save to localStorage
-function persist() {
+// 2. Core Functions
+function save() {
     localStorage.setItem('hvac_data', JSON.stringify(state.jobs));
     localStorage.setItem('hvac_review_link', state.reviewLink);
 }
 
-// Toggle the entry form
 function toggleForm() {
     const el = document.getElementById('form-overlay');
     el.classList.toggle('hidden');
 }
 
-// Submit the form without popups
 function submitForm() {
     const client = document.getElementById('f-client').value;
     const task = document.getElementById('f-task').value;
@@ -25,72 +25,73 @@ function submitForm() {
     const type = document.getElementById('f-type').value;
 
     if (!client || !task) {
-        alert("Please enter a Client and Task");
+        alert("Enter a Client and Task description.");
         return;
     }
 
-    const newEntry = {
+    const entry = {
         id: Date.now(),
         client,
         task,
         amount,
         type,
-        status: 'Active', // Ensure every new entry is 'Active' so it shows up
-        date: new Date().toLocaleDateString('en-NZ')
+        status: 'Active', // New entries are always active
+        date: new Date().toLocaleDateString('en-NZ'),
+        xeroCode: type === 'Job' ? '200' : 'Draft' // Placeholder for Xero Sales Code
     };
 
-    state.jobs.push(newEntry);
-    persist();
+    state.jobs.push(entry);
+    save();
     toggleForm();
     
-    // Reset fields
+    // Clear inputs
     document.getElementById('f-client').value = '';
     document.getElementById('f-task').value = '';
     document.getElementById('f-amount').value = '';
-
-    // Route user to the correct view
+    
+    // Refresh view
     type === 'Quote' ? renderQuotes() : renderDashboard();
 }
 
-// Complete Job & Copy Review
 function completeJob(id) {
     const job = state.jobs.find(j => j.id === id);
-    job.status = 'Completed';
-    persist();
+    job.status = 'Paid';
+    save();
     
-    const reviewMsg = `Hi ${job.client}, thanks for the work today! If you have a moment, we'd love a Google review: ${state.reviewLink}`;
+    const msg = `Hi ${job.client}, thanks for choosing us today! We'd love a review: ${state.reviewLink}`;
     
-    navigator.clipboard.writeText(reviewMsg).then(() => {
-        alert("Success! Job closed and review link copied to your clipboard.");
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(msg).then(() => {
+            alert("Job Marked Paid! Review request copied to clipboard.");
+            renderDashboard();
+        });
+    } else {
+        alert("Job Marked Paid!");
         renderDashboard();
-    }).catch(() => {
-        alert("Job closed! (Tip: Enable clipboard permissions for auto-copy)");
-        renderDashboard();
-    });
+    }
 }
 
-// Render Dashboard (Active Jobs)
+// 3. Rendering Views
 function renderDashboard() {
-    state.currentView = 'dashboard';
-    const container = document.getElementById('app-content');
     const activeJobs = state.jobs.filter(j => j.type === 'Job' && j.status === 'Active');
-
+    const container = document.getElementById('app-content');
+    
     container.innerHTML = `
         <div class="mb-6">
-            <h2 class="text-2xl font-black text-gray-800">My Jobs</h2>
-            <p class="text-sm text-gray-500">${activeJobs.length} active jobs on the go</p>
+            <h2 class="text-xs font-black text-blue-600 uppercase tracking-widest">Active Jobs</h2>
+            <p class="text-2xl font-bold text-gray-800">Field Schedule</p>
         </div>
-        <div class="space-y-4">
-            ${activeJobs.length === 0 ? '<div class="text-center py-10 bg-white rounded-2xl border-2 border-dashed border-gray-200 text-gray-400">No active jobs. Tap + to add one.</div>' : ''}
+        <div class="space-y-3">
+            ${activeJobs.length === 0 ? '<p class="text-gray-400 py-10 text-center border-2 border-dashed rounded-2xl">No active jobs</p>' : ''}
             ${activeJobs.map(job => `
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center">
                     <div>
-                        <h3 class="font-bold text-gray-900">${job.client}</h3>
-                        <p class="text-xs text-gray-500 mb-2">${job.task}</p>
-                        <p class="text-blue-700 font-bold">$${(job.amount * 1.15).toFixed(2)} <span class="text-[10px] opacity-50">INC GST</span></p>
+                        <h3 class="font-bold text-gray-900 leading-tight">${job.client}</h3>
+                        <p class="text-sm text-gray-500">${job.task}</p>
+                        <p class="text-blue-600 font-bold mt-2 text-lg">$${(job.amount * 1.15).toFixed(2)} <span class="text-[10px] text-gray-400 font-normal">INC GST</span></p>
                     </div>
-                    <button onclick="completeJob(${job.id})" class="bg-blue-600 text-white h-12 w-12 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
-                        <i data-lucide="check-check"></i>
+                    <button onclick="completeJob(${job.id})" class="bg-green-500 text-white p-4 rounded-2xl shadow-lg shadow-green-100">
+                        <i data-lucide="check"></i>
                     </button>
                 </div>
             `).join('')}
@@ -99,26 +100,26 @@ function renderDashboard() {
     lucide.createIcons();
 }
 
-// Render Quotes
 function renderQuotes() {
-    state.currentView = 'quotes';
-    const container = document.getElementById('app-content');
     const quotes = state.jobs.filter(j => j.type === 'Quote' && j.status === 'Active');
-
+    const container = document.getElementById('app-content');
+    
     container.innerHTML = `
         <div class="mb-6">
-            <h2 class="text-2xl font-black text-gray-800">Quotes</h2>
-            <p class="text-sm text-gray-500">Pending estimates</p>
+            <h2 class="text-xs font-black text-orange-600 uppercase tracking-widest">Pending</h2>
+            <p class="text-2xl font-bold text-gray-800">Quotes & Estimates</p>
         </div>
-        <div class="space-y-4">
-            ${quotes.length === 0 ? '<div class="text-center py-10 bg-white rounded-2xl border-2 border-dashed border-gray-200 text-gray-400">No pending quotes.</div>' : ''}
+        <div class="space-y-3">
+            ${quotes.length === 0 ? '<p class="text-gray-400 py-10 text-center border-2 border-dashed rounded-2xl">No pending quotes</p>' : ''}
             ${quotes.map(q => `
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
-                    <h3 class="font-bold text-gray-900">${q.client}</h3>
-                    <p class="text-xs text-gray-500 mb-2">${q.task}</p>
-                    <div class="flex justify-between items-center">
-                        <p class="text-gray-900 font-bold">$${(q.amount * 1.15).toFixed(2)}</p>
-                        <button onclick="alert('Convert to Job coming soon!')" class="text-xs font-bold text-blue-600 uppercase tracking-widest">Convert to Job</button>
+                <div class="bg-white p-5 rounded-2xl border border-gray-200">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-bold text-gray-800">${q.client}</h3>
+                            <p class="text-sm text-gray-500">${q.task}</p>
+                            <p class="text-gray-900 font-bold mt-2">$${(q.amount * 1.15).toFixed(2)}</p>
+                        </div>
+                        <span class="text-[10px] bg-gray-100 px-2 py-1 rounded font-bold text-gray-500 uppercase">Quote</span>
                     </div>
                 </div>
             `).join('')}
@@ -127,7 +128,5 @@ function renderQuotes() {
     lucide.createIcons();
 }
 
-// Initialize App
-document.addEventListener('DOMContentLoaded', () => {
-    renderDashboard();
-});
+// Start App
+renderDashboard();
