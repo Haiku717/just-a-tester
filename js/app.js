@@ -1,110 +1,133 @@
-// 1. Setup & Data Persistence
-lucide.createIcons();
+// Initialize state properly
 let state = {
-    view: 'dashboard',
-    jobs: JSON.parse(localStorage.getItem('hvac_jobs')) || [],
-    settings: JSON.parse(localStorage.getItem('hvac_settings')) || { bizName: "My Trade Co", reviewLink: "", gstNumber: "" }
+    jobs: JSON.parse(localStorage.getItem('hvac_data')) || [],
+    reviewLink: localStorage.getItem('hvac_review_link') || "https://g.page/r/your-link/review",
+    currentView: 'dashboard'
 };
 
-const save = () => localStorage.setItem('hvac_jobs', JSON.stringify(state.jobs));
-const saveSettings = () => localStorage.setItem('hvac_settings', JSON.stringify(state.settings));
-
-// 2. View Controller
-function setView(viewName) {
-    state.view = viewName;
-    render();
+// Utility to save to localStorage
+function persist() {
+    localStorage.setItem('hvac_data', JSON.stringify(state.jobs));
+    localStorage.setItem('hvac_review_link', state.reviewLink);
 }
 
-// 3. Logic: Add Job / Quote
-function createJob(type = 'Job') {
-    const client = prompt("Client Name:");
-    if (!client) return;
-    const task = prompt(`${type} Description:`);
-    const amount = parseFloat(prompt("Estimated Amount (Excl. GST):") || 0);
+// Toggle the entry form
+function toggleForm() {
+    const el = document.getElementById('form-overlay');
+    el.classList.toggle('hidden');
+}
 
-    const newJob = {
+// Submit the form without popups
+function submitForm() {
+    const client = document.getElementById('f-client').value;
+    const task = document.getElementById('f-task').value;
+    const amount = parseFloat(document.getElementById('f-amount').value || 0);
+    const type = document.getElementById('f-type').value;
+
+    if (!client || !task) {
+        alert("Please enter a Client and Task");
+        return;
+    }
+
+    const newEntry = {
         id: Date.now(),
         client,
         task,
         amount,
-        type: type, // 'Job' or 'Quote'
-        status: type === 'Quote' ? 'Pending' : 'Active',
-        date: new Date().toLocaleDateString()
+        type,
+        status: 'Active', // Ensure every new entry is 'Active' so it shows up
+        date: new Date().toLocaleDateString('en-NZ')
     };
 
-    state.jobs.push(newJob);
-    save();
-    render();
-}
-
-// 4. Logic: Conversion & Payment
-function markAsPaid(id) {
-    const job = state.jobs.find(j => j.id === id);
-    job.status = 'Paid';
-    // Trigger Review Copy
-    const msg = `Hi ${job.client}, thanks for the business! Hope you're happy with the work. Would you mind leaving us a quick review? ${state.settings.reviewLink}`;
-    navigator.clipboard.writeText(msg);
-    alert("Invoiced marked PAID. Review request copied to clipboard!");
-    save();
-    render();
-}
-
-// 5. The Render Engine
-function render() {
-    const main = document.getElementById('job-list');
+    state.jobs.push(newEntry);
+    persist();
+    toggleForm();
     
-    // Stats for Dashboard
-    const totalPending = state.jobs.filter(j => j.status === 'Active').reduce((acc, j) => acc + j.amount, 0);
-    const overdueCount = state.jobs.filter(j => j.status === 'Active').length;
+    // Reset fields
+    document.getElementById('f-client').value = '';
+    document.getElementById('f-task').value = '';
+    document.getElementById('f-amount').value = '';
 
-    if (state.view === 'dashboard') {
-        main.innerHTML = `
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <div class="bg-blue-50 p-4 rounded-xl border border-blue-200">
-                    <p class="text-xs text-blue-600 font-bold uppercase">Pipeline</p>
-                    <p class="text-xl font-bold">$${(totalPending * 1.15).toFixed(2)} <span class="text-xs font-normal text-gray-500">inc. GST</span></p>
-                </div>
-                <div class="bg-orange-50 p-4 rounded-xl border border-orange-200 text-right">
-                    <p class="text-xs text-orange-600 font-bold uppercase">Active Jobs</p>
-                    <p class="text-xl font-bold">${overdueCount}</p>
-                </div>
-            </div>
-            <div class="space-y-3">
-                <h2 class="font-bold text-gray-700">In Progress</h2>
-                ${renderJobList('Active')}
-            </div>
-        `;
-    } else if (state.view === 'quotes') {
-        main.innerHTML = `
-            <h2 class="font-bold text-gray-700 mb-4">Quotes & Estimates</h2>
-            <button onclick="createJob('Quote')" class="w-full bg-blue-100 text-blue-700 p-3 rounded-lg font-bold mb-4">+ Create New Quote</button>
-            ${renderJobList('Pending', 'Quote')}
-        `;
-    }
+    // Route user to the correct view
+    type === 'Quote' ? renderQuotes() : renderDashboard();
+}
 
+// Complete Job & Copy Review
+function completeJob(id) {
+    const job = state.jobs.find(j => j.id === id);
+    job.status = 'Completed';
+    persist();
+    
+    const reviewMsg = `Hi ${job.client}, thanks for the work today! If you have a moment, we'd love a Google review: ${state.reviewLink}`;
+    
+    navigator.clipboard.writeText(reviewMsg).then(() => {
+        alert("Success! Job closed and review link copied to your clipboard.");
+        renderDashboard();
+    }).catch(() => {
+        alert("Job closed! (Tip: Enable clipboard permissions for auto-copy)");
+        renderDashboard();
+    });
+}
+
+// Render Dashboard (Active Jobs)
+function renderDashboard() {
+    state.currentView = 'dashboard';
+    const container = document.getElementById('app-content');
+    const activeJobs = state.jobs.filter(j => j.type === 'Job' && j.status === 'Active');
+
+    container.innerHTML = `
+        <div class="mb-6">
+            <h2 class="text-2xl font-black text-gray-800">My Jobs</h2>
+            <p class="text-sm text-gray-500">${activeJobs.length} active jobs on the go</p>
+        </div>
+        <div class="space-y-4">
+            ${activeJobs.length === 0 ? '<div class="text-center py-10 bg-white rounded-2xl border-2 border-dashed border-gray-200 text-gray-400">No active jobs. Tap + to add one.</div>' : ''}
+            ${activeJobs.map(job => `
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-gray-900">${job.client}</h3>
+                        <p class="text-xs text-gray-500 mb-2">${job.task}</p>
+                        <p class="text-blue-700 font-bold">$${(job.amount * 1.15).toFixed(2)} <span class="text-[10px] opacity-50">INC GST</span></p>
+                    </div>
+                    <button onclick="completeJob(${job.id})" class="bg-blue-600 text-white h-12 w-12 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
+                        <i data-lucide="check-check"></i>
+                    </button>
+                </div>
+            `).join('')}
+        </div>
+    `;
     lucide.createIcons();
 }
 
-function renderJobList(status, typeFilter = 'Job') {
-    const filtered = state.jobs.filter(j => j.status === status);
-    if (filtered.length === 0) return `<p class="text-gray-400 text-center py-4">Nothing here yet.</p>`;
-    
-    return filtered.map(job => `
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex justify-between items-center">
-            <div class="flex-1">
-                <div class="flex items-center gap-2">
-                    <h3 class="font-bold text-gray-800">${job.client}</h3>
-                    <span class="text-[10px] bg-gray-100 px-1 rounded">${job.date}</span>
-                </div>
-                <p class="text-sm text-gray-500">${job.task}</p>
-                <p class="text-sm font-bold text-blue-600">$${(job.amount * 1.15).toFixed(2)}</p>
-            </div>
-            <button onclick="markAsPaid(${job.id})" class="bg-green-600 text-white p-2 rounded-lg ml-2">
-                <i data-lucide="check" size="18"></i>
-            </button>
+// Render Quotes
+function renderQuotes() {
+    state.currentView = 'quotes';
+    const container = document.getElementById('app-content');
+    const quotes = state.jobs.filter(j => j.type === 'Quote' && j.status === 'Active');
+
+    container.innerHTML = `
+        <div class="mb-6">
+            <h2 class="text-2xl font-black text-gray-800">Quotes</h2>
+            <p class="text-sm text-gray-500">Pending estimates</p>
         </div>
-    `).join('');
+        <div class="space-y-4">
+            ${quotes.length === 0 ? '<div class="text-center py-10 bg-white rounded-2xl border-2 border-dashed border-gray-200 text-gray-400">No pending quotes.</div>' : ''}
+            ${quotes.map(q => `
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                    <h3 class="font-bold text-gray-900">${q.client}</h3>
+                    <p class="text-xs text-gray-500 mb-2">${q.task}</p>
+                    <div class="flex justify-between items-center">
+                        <p class="text-gray-900 font-bold">$${(q.amount * 1.15).toFixed(2)}</p>
+                        <button onclick="alert('Convert to Job coming soon!')" class="text-xs font-bold text-blue-600 uppercase tracking-widest">Convert to Job</button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+    lucide.createIcons();
 }
 
-// Run initial render
-render();
+// Initialize App
+document.addEventListener('DOMContentLoaded', () => {
+    renderDashboard();
+});
